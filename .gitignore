@@ -1,0 +1,5 @@
+static/tiles/256
+external/
+*~
+*.pyc
+*.log
