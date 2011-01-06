@@ -103,23 +103,44 @@ app.get('/paint', function(req, res) {
    res.render('paint.html');
 });
 
-app.get('/tiles/:size/:z/:x,:y\.png', function(req, res) {
+app.post('/paint/doodle', function(req, res) {
+   var r = req.body.r;
+   var lat = req.body.lat;
+   var lon = req.body.lon;
+   
+   var ps = spawn('./static/tiles/testsavecanvas.py', [r, lat, lon]);
+   ps.stdin.end();
+   ps.stdout.on('data', function (data, secondthing) {
+      L("Thanks!");
+   });
+   ps.stderr.on('data', function(data) {
+      if (/^execvp\(\)/.test(data.asciiSlice(0,data.length))) {
+         console.log('Failed to start child process.');
+      } else {
+         L(data.toString('ascii'));
+      }
+   });
+   
+   res.send("Cool");
+});
+
+app.get('/tiles/:size/:z/:row,:col\.png', function(req, res) {
    //console.log(req.params);
    var size = parseInt(req.params.size),
        zoom = parseInt(req.params.z),
-       x = parseInt(req.params.x),
-       y = parseInt(req.params.y);
+       row = parseInt(req.params.row),
+       col = parseInt(req.params.col);
    
    if (size != 256) 
      throw "Must be 256px size";
    
    var width = size * Math.pow(2, zoom);
-   var filename = 'static/tiles/' + size + '/' + zoom + '/' + x + ',' + y + '.png';
+   var filename = 'static/tiles/' + size + '/' + zoom + '/' + row + ',' + col + '.png';
    
    
    gm('static/tiles/worldmap.png')
      .resize(width, width)
-     .crop(size, size, x * size, y * size)
+     .crop(size, size, row * size, col * size)
      .write(filename, function(err){
         if (err) {
            L("ERROR", err);
